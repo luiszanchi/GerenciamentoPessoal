@@ -1,0 +1,55 @@
+version: '2'
+services:
+
+  # The Application
+  app:
+    container_name: gerenciamentopessoal-app
+    build:
+      context: ./
+      dockerfile: phpdocker/app.dockerfile
+    working_dir: /var/www
+    volumes:
+      - ./:/application
+      - ./src/:/var/www
+      - ./phpdocker/php-ini-overrides.ini:/etc/php/7.2/fpm/conf.d/99-overrides.ini
+    ports:
+      - 9000:9000
+    links:
+      - database
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=gerenciamentopessoal-database"
+
+  # The Web Server
+  web:
+    container_name: gerenciamentopessoal-web
+    build:
+      context: ./
+      dockerfile: phpdocker/web.dockerfile
+    working_dir: /var/www
+    volumes:
+      - .:/application
+      - ./phpdocker/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 8080:80
+    links:
+      - database
+      - app
+
+  # The Database
+  database:
+    container_name: gerenciamentopessoal-database
+    image: mysql:5.7
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./phpdocker/mysql:/var/lib/mysql
+    environment:
+        - MYSQL_ROOT_PASSWORD=gerenciamentopessoal
+        - MYSQL_DATABASE=gerenciamentopessoal
+        - MYSQL_USER=gerenciamentopessoal
+        - MYSQL_PASSWORD=gerenciamentopessoal
+    ports:
+        - "33061:3306"
+
+volumes:
+  dbdata:
